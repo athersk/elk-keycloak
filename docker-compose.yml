@@ -1,0 +1,57 @@
+---
+version: '3.2'
+services:
+  elasticsearch: 
+    container_name: elastic01
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.6
+    environment:
+      - "ES_JAVA_OPTS=-Xmx512m -Xms512m"
+      - "ELASTIC_PASSWORD=12345678"
+      - "discovery.type=single-node"
+      - "bootstrap.memory_lock=true"
+#      - "ES_SETTING_BOOTSTRAP_MEMORY__LOCK=true" 
+
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+ 
+    volumes:
+      - $PWD/data:/usr/share/elasticsearch/data
+      - $PWD/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+    
+    ports:
+      - 9200:9200
+      
+    networks:
+      - "elk-net"
+
+  kibana:
+    container_name: kibana01
+    image: docker.elastic.co/kibana/kibana:7.17.6
+    environment:
+      - "ELASTICSEARCH_HOSTS=http://elastic01:9200"
+      - "KIBANA_SYSTEM_PASSWORD=${KIBANA_SYSTEM_PASSWORD:-}"
+    networks:
+      - "elk-net"
+    ports:
+      - 5601:5601
+    volumes:
+      - ./kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro,Z
+
+volumes:
+  elasticsearch:
+    driver: local
+        
+volumes:
+  data:
+    driver: local
+
+volumes:
+  kibana:
+    driver: local
+
+networks:
+  elk-net:
+    driver: bridge
+
